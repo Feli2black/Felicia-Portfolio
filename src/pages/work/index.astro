@@ -1,10 +1,158 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import { getCollection } from 'astro:content';
+
+const disciplines = (await getCollection('disciplines')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const projects = (await getCollection('projects')).sort(
+  (a, b) => b.data.year - a.data.year
+);
+
+const nameBySlug = Object.fromEntries(
+  disciplines.map((d) => [d.data.slug, d.data.name])
+);
 ---
 
-<BaseLayout title="Work" description="Selected work by Felicia Adeogun.">
-  <section style="max-width:1280px;margin:0 auto;padding:4rem 1.5rem;">
-    <h1>Work</h1>
-    <p style="color:var(--color-text-secondary)">Work page coming in Stage 5.</p>
+<BaseLayout title="Work" description="Selected work by Felicia Adeogun across video, motion, design, UI/UX, film and content.">
+  <section class="work">
+    <header class="intro">
+      <p class="eyebrow">Selected Work</p>
+      <h1>WORK</h1>
+    </header>
+
+    <div class="filters" role="group" aria-label="Filter projects by discipline">
+      <button class="filter active" data-filter="all" aria-pressed="true">All</button>
+      {disciplines.map((d) => (
+        <button class="filter" data-filter={d.data.slug} aria-pressed="false">
+          {d.data.name}
+        </button>
+      ))}
+    </div>
+
+    <div class="grid" id="grid">
+      {projects.map((p) => (
+        <ProjectCard
+          title={p.data.title}
+          slug={p.data.slug}
+          disciplineName={nameBySlug[p.data.discipline] ?? p.data.discipline}
+          disciplineSlug={p.data.discipline}
+          year={p.data.year}
+          description={p.data.description}
+          tools={p.data.tools}
+          coverImage={p.data.coverImage}
+        />
+      ))}
+    </div>
+
+    <p id="empty" class="empty" hidden>No projects in this discipline yet. Check back soon.</p>
   </section>
 </BaseLayout>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter');
+  const cards = document.querySelectorAll<HTMLElement>('.card');
+  const empty = document.getElementById('empty');
+
+  function applyFilter(slug: string) {
+    let visible = 0;
+    cards.forEach((card) => {
+      const show = slug === 'all' || card.dataset.discipline === slug;
+      card.hidden = !show;
+      if (show) visible++;
+    });
+    buttons.forEach((b) => {
+      const active = b.dataset.filter === slug;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    if (empty) empty.hidden = visible > 0;
+  }
+
+  buttons.forEach((b) =>
+    b.addEventListener('click', () => {
+      const slug = b.dataset.filter ?? 'all';
+      applyFilter(slug);
+      history.replaceState(null, '', slug === 'all' ? '/work' : `/work#${slug}`);
+    })
+  );
+
+  const fromHash = location.hash.replace('#', '');
+  if (fromHash && document.querySelector(`.filter[data-filter="${fromHash}"]`)) {
+    applyFilter(fromHash);
+  }
+</script>
+
+<style>
+  .work {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 2rem;
+  }
+  .eyebrow {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+  h1 {
+    margin: 0 0 2.5rem;
+    font-size: clamp(3rem, 10vw, 7rem);
+    line-height: 0.95;
+    font-weight: 800;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 2.5rem;
+  }
+  .filter {
+    background: none;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    padding: 0.6rem 1rem;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .filter:hover {
+    color: var(--color-text-primary);
+    border-color: #4a4a4a;
+  }
+  .filter.active {
+    background: var(--color-text-primary);
+    color: var(--color-bg);
+    border-color: var(--color-text-primary);
+  }
+  .filter:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .empty {
+    color: var(--color-text-secondary);
+    padding: 3rem 0;
+  }
+
+  @media (max-width: 600px) {
+    .filters {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    .filter {
+      white-space: nowrap;
+    }
+  }
+</style>
