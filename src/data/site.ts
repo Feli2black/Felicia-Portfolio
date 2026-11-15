@@ -1,6 +1,7 @@
 export const site = {
   name: 'Felicia Adeogun',
   location: 'Lagos, Nigeria',
+  role: 'Digital Creative & Strategist',
 
   // TODO: change these to your real details
   email: 'afolly000@gmail.com',
@@ -23,3 +24,10 @@ export const site = {
   // Your photo: put it in public/images and set the path, e.g. '/images/felicia.jpg'
   photo: '"C:\Users\felic\OneDrive\Desktop\SIDEWORK\profiles\IMG_6948.PNG"',
 };
+
+
+
+
+
+
+

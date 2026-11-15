@@ -1,0 +1,24 @@
+[
+  { "id": "creative-design", "name": "Creative Design", "description": "Visual design and animation with a distinctive point of view.", "order": 1 },
+  { "id": "digital-product-experience-design", "name": "Digital Product & Experience Design", "description": "Interfaces, products and interactive experiences designed around real users.", "order": 2 },
+  { "id": "media-content-production", "name": "Media & Content Production", "description": "Film, video and content, from script to final cut.", "order": 3 },
+  { "id": "marketing-communications", "name": "Marketing & Communications", "description": "Strategy, branding and messaging that connects with audiences.", "order": 4 },
+
+  { "id": "graphic-design", "name": "Graphic Design", "parent": "creative-design", "description": "Posters, social campaigns and editorial design.", "order": 11 },
+  { "id": "motion-graphics", "name": "Motion Graphics", "parent": "creative-design", "description": "Animated visuals, titles and brand motion.", "order": 12 },
+  { "id": "3d-design", "name": "3D Design", "parent": "creative-design", "description": "3D models, environments and renders.", "order": 13 },
+
+  { "id": "ui-ux-design", "name": "UI/UX Design", "parent": "digital-product-experience-design", "description": "User flows, wireframes and interface design.", "order": 21 },
+  { "id": "product-design", "name": "Product Design", "parent": "digital-product-experience-design", "description": "Designing digital products from problem to prototype.", "order": 22 },
+  { "id": "interactive-media", "name": "Interactive Media", "parent": "digital-product-experience-design", "description": "Interactive and immersive digital experiences.", "order": 23 },
+
+  { "id": "video-editing", "name": "Video Editing", "parent": "media-content-production", "description": "Cutting footage into clear, compelling stories.", "order": 31 },
+  { "id": "filmmaking", "name": "Filmmaking", "parent": "media-content-production", "description": "Film and production work, from concept to final cut.", "order": 32 },
+  { "id": "scriptwriting", "name": "Scriptwriting", "parent": "media-content-production", "description": "Scripts and written stories for screen and social.", "order": 33 },
+  { "id": "content-creation", "name": "Content Creation", "parent": "media-content-production", "description": "Social-first content and creative concepts.", "order": 34 },
+
+  { "id": "digital-marketing", "name": "Digital Marketing", "parent": "marketing-communications", "description": "Campaigns, audience insight and lead generation.", "order": 41 },
+  { "id": "branding", "name": "Branding", "parent": "marketing-communications", "description": "Brand identity, voice and visual systems.", "order": 42 },
+  { "id": "corporate-communications", "name": "Corporate Communications", "parent": "marketing-communications", "description": "Clear, consistent messaging for organisations.", "order": 43 },
+  { "id": "content-strategy", "name": "Content Strategy", "parent": "marketing-communications", "description": "Planning content around goals and audiences.", "order": 44 }
+]

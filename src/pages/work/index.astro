@@ -1,613 +1,218 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import ProjectCard from '../components/ProjectCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
 import { getCollection } from 'astro:content';
-import { site } from '../data/site';
 
-const disciplines = (await getCollection('disciplines')).sort(
+const all = (await getCollection('disciplines')).sort(
   (a, b) => a.data.order - b.data.order
 );
-const allProjects = (await getCollection('projects')).sort(
+const mains = all.filter((d) => !d.data.parent);
+const subsOf = (id: string) => all.filter((d) => d.data.parent === id);
+const byId = Object.fromEntries(all.map((d) => [d.id, d]));
+const mainOf = (slug: string) => byId[slug]?.data.parent ?? slug;
+
+const projects = (await getCollection('projects')).sort(
   (a, b) => b.data.year - a.data.year
 );
-
-const featured = allProjects.filter((p) => p.data.featured);
-const selected = (featured.length ? featured : allProjects).slice(0, 3);
-
-const nameBySlug = Object.fromEntries(
-  disciplines.map((d) => [d.data.slug, d.data.name])
-);
-const tickerNames = [...disciplines.map((d) => d.data.name), ...disciplines.map((d) => d.data.name)];
-const hasVideo = Boolean(site.showreel.video);
-const year = new Date().getFullYear();
-const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
-<BaseLayout title="Home" description="Felicia Adeogun is a creative designer, editor and storyteller working across design, video, motion and digital marketing.">
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-top">
-      <span class="rec"><i></i> Portfolio {year}</span>
-      <span>{site.location}</span>
+<BaseLayout title="Work" description="Selected work by Felicia Adeogun across creative design, digital product design, media production and marketing.">
+  <section class="work">
+    <header>
+      <p class="eyebrow">Selected Work</p>
+      <h1>WORK</h1>
+    </header>
+
+    <div class="filters" role="group" aria-label="Filter projects by category">
+      <button class="filter active" data-main-filter="all" aria-pressed="true">All</button>
+      {mains.map((m) => (
+        <button class="filter" data-main-filter={m.id} aria-pressed="false">{m.data.name}</button>
+      ))}
     </div>
 
-    <h1>
-      <span class="line" style="--i:0"><span>I CREATE.</span></span>
-      <span class="line" style="--i:1"><span>I DESIGN.</span></span>
-      <span class="line" style="--i:2"><span>I TELL <em>stories.</em></span></span>
-    </h1>
-
-    <div class="hero-bottom">
-      <p class="intro">{site.intro}</p>
-      <div class="cta">
-        <a class="btn primary" href="/work">View My Work <span class="arr" aria-hidden="true">→</span></a>
-        <a class="btn" href="/about">About Me</a>
-        <a class="btn" href="/contact">Contact Me</a>
+    {mains.map((m) => subsOf(m.id).length > 0 && (
+      <div class="filters sub" role="group" aria-label={`Filter ${m.data.name} by specialisation`} data-sub-group={m.id} hidden>
+        <button class="filter active" data-sub-filter="all" data-parent={m.id} aria-pressed="true">All {m.data.name}</button>
+        {subsOf(m.id).map((s) => (
+          <button class="filter" data-sub-filter={s.id} data-parent={m.id} aria-pressed="false">{s.data.name}</button>
+        ))}
       </div>
-    </div>
-  </section>
+    ))}
 
-  <!-- TICKER (decorative) -->
-  <div class="ticker" aria-hidden="true">
-    <div class="ticker-track">
-      <div class="ticker-group">
-        {tickerNames.map((n) => <span>{n}</span>)}
-      </div>
-      <div class="ticker-group">
-        {tickerNames.map((n) => <span>{n}</span>)}
-      </div>
-    </div>
-  </div>
-
-  <!-- SHOWREEL -->
-  <section class="section reveal" aria-labelledby="reel-title">
-    <p class="eyebrow">01 — Showreel</p>
-    <h2 id="reel-title" class="sr-only">Showreel</h2>
-    <div class="reel" id="reel" data-video={site.showreel.video}>
-      {site.showreel.poster && (
-        <img src={site.showreel.poster} alt="Showreel preview frame" loading="lazy" />
-      )}
-      <span class="reel-label">Showreel {year}</span>
-      <span class="reel-time" aria-hidden="true">00:00:00:00</span>
-      {hasVideo ? (
-        <button class="reel-play" type="button" aria-label="Play showreel">
-          <span aria-hidden="true">▶</span>
-        </button>
-      ) : (
-        <p class="reel-soon">Showreel coming soon</p>
-      )}
-    </div>
-  </section>
-
-  <!-- SELECTED WORK -->
-  <section class="section reveal" aria-labelledby="selected-title">
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">02 — Selected Work</p>
-        <h2 id="selected-title">Recent projects</h2>
-      </div>
-      <a class="text-link" href="/work">View all work <span aria-hidden="true">→</span></a>
-    </div>
     <div class="grid">
-      {selected.map((p) => (
-        <ProjectCard
-          title={p.data.title}
-          slug={p.data.slug}
-          disciplineName={nameBySlug[p.data.discipline] ?? p.data.discipline}
-          disciplineSlug={p.data.discipline}
-          year={p.data.year}
-          description={p.data.description}
-          tools={p.data.tools}
-          coverImage={p.data.coverImage}
-        />
+      {projects.map((p) => (
+        <div class="item" data-main={mainOf(p.data.discipline)} data-sub={p.data.discipline}>
+          <ProjectCard
+            title={p.data.title}
+            slug={p.data.slug}
+            disciplineName={byId[p.data.discipline]?.data.name ?? p.data.discipline}
+            disciplineSlug={p.data.discipline}
+            year={p.data.year}
+            description={p.data.description}
+            tools={p.data.tools}
+            coverImage={p.data.coverImage}
+          />
+        </div>
       ))}
     </div>
-  </section>
 
-  <!-- DISCIPLINES -->
-  <section class="section reveal" aria-labelledby="disc-title">
-    <p class="eyebrow">03 — Disciplines</p>
-    <h2 id="disc-title">What I do</h2>
-    <ol class="disc-list">
-      {disciplines.map((d, i) => (
-        <li>
-          <a href={`/work#${d.data.slug}`}>
-            <span class="num">{pad(i + 1)}</span>
-            <span class="name">{d.data.name}</span>
-            <span class="blurb">{d.data.description}</span>
-            <span class="go" aria-hidden="true">→</span>
-          </a>
-        </li>
-      ))}
-    </ol>
-  </section>
-
-  <!-- ABOUT PREVIEW -->
-  <section class="section about reveal" aria-labelledby="about-title">
-    <div class="photo">
-      {site.photo ? (
-        <img src={site.photo} alt="Portrait of Felicia Adeogun" loading="lazy" />
-      ) : (
-        <span class="mono" aria-hidden="true">FA</span>
-      )}
-    </div>
-    <div class="about-text">
-      <p class="eyebrow">04 — About</p>
-      <h2 id="about-title">Hi, I'm Felicia.</h2>
-      <p>{site.aboutPreview}</p>
-      <a class="btn" href="/about">About Me <span class="arr" aria-hidden="true">→</span></a>
-    </div>
-  </section>
-
-  <!-- CONTACT CTA -->
-  <section class="section cta-block reveal" aria-labelledby="contact-title">
-    <p class="eyebrow">05 — Contact</p>
-    <h2 id="contact-title">Let's make something <em>worth watching.</em></h2>
-    <div class="cta">
-      <a class="btn primary" href="/contact">Contact Me <span class="arr" aria-hidden="true">→</span></a>
-      <a class="btn" href={`mailto:${site.email}`}>{site.email}</a>
-    </div>
+    <p id="empty" class="empty" hidden>No projects here yet. Check back soon.</p>
   </section>
 </BaseLayout>
 
 <script>
-  // Scroll reveal (shows everything immediately if reduced motion is on)
-  document.documentElement.classList.add('js');
-  const els = document.querySelectorAll<HTMLElement>('.reveal');
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mainBtns = document.querySelectorAll<HTMLButtonElement>('[data-main-filter]');
+  const subGroups = document.querySelectorAll<HTMLElement>('[data-sub-group]');
+  const subBtns = document.querySelectorAll<HTMLButtonElement>('[data-sub-filter]');
+  const items = document.querySelectorAll<HTMLElement>('.item');
+  const empty = document.getElementById('empty');
 
-  if (reduce || !('IntersectionObserver' in window)) {
-    els.forEach((el) => el.classList.add('in'));
-  } else {
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in');
-            io.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12 }
-    );
-    els.forEach((el) => io.observe(el));
-  }
+  let main = 'all';
+  let sub = 'all';
 
-  // Showreel: only loads the video when clicked
-  const reel = document.getElementById('reel');
-  const playBtn = reel?.querySelector('.reel-play');
-  if (reel && playBtn) {
-    playBtn.addEventListener('click', () => {
-      const src = reel.dataset.video;
-      if (!src) return;
-      const video = document.createElement('video');
-      video.src = src;
-      video.controls = true;
-      video.autoplay = true;
-      video.playsInline = true;
-      video.preload = 'auto';
-      reel.replaceChildren(video);
+  function render() {
+    let visible = 0;
+    items.forEach((it) => {
+      const okMain = main === 'all' || it.dataset.main === main;
+      const okSub = sub === 'all' || it.dataset.sub === sub;
+      const show = okMain && okSub;
+      it.hidden = !show;
+      if (show) visible++;
     });
+    mainBtns.forEach((b) => {
+      const active = b.dataset.mainFilter === main;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    subGroups.forEach((g) => {
+      g.hidden = g.dataset.subGroup !== main;
+    });
+    subBtns.forEach((b) => {
+      const active = b.dataset.subFilter === sub;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    if (empty) empty.hidden = visible > 0;
+
+    const key = sub !== 'all' ? sub : main;
+    history.replaceState(null, '', key === 'all' ? '/work' : `/work#${key}`);
   }
+
+  mainBtns.forEach((b) =>
+    b.addEventListener('click', () => {
+      main = b.dataset.mainFilter ?? 'all';
+      sub = 'all';
+      render();
+    })
+  );
+  subBtns.forEach((b) =>
+    b.addEventListener('click', () => {
+      sub = b.dataset.subFilter ?? 'all';
+      render();
+    })
+  );
+
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const asMain = document.querySelector(`[data-main-filter="${hash}"]`);
+    const asSub = document.querySelector<HTMLElement>(`[data-sub-filter="${hash}"]`);
+    if (asMain) {
+      main = hash;
+    } else if (asSub?.dataset.parent) {
+      main = asSub.dataset.parent;
+      sub = hash;
+    }
+  }
+  render();
 </script>
 
 <style>
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-  em {
-    font-family: 'Instrument Serif', Georgia, serif;
-    font-style: italic;
-    font-weight: 400;
-    text-transform: none;
-  }
-
-  /* HERO */
-  .hero {
+  .work {
     max-width: 1280px;
     margin: 0 auto;
-    padding: 3rem 1.5rem 3.5rem;
-  }
-  .hero-top {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.72rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    margin-bottom: clamp(2rem, 7vw, 5rem);
-  }
-  .rec {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-  .rec i {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--color-accent);
-    animation: blink 1.8s ease-in-out infinite;
-  }
-  @keyframes blink {
-    50% { opacity: 0.25; }
-  }
-  h1 {
-    margin: 0;
-    font-size: clamp(2.9rem, 11.5vw, 9.5rem);
-    line-height: 0.95;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-  .line {
-    display: block;
-    overflow: hidden;
-    padding-bottom: 0.08em;
-  }
-  .line > span {
-    display: block;
-    transform: translateY(105%);
-    animation: rise 0.95s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    animation-delay: calc(var(--i) * 0.13s + 0.1s);
-  }
-  h1 em {
-    font-size: 1.08em;
-    letter-spacing: 0;
-  }
-  @keyframes rise {
-    to { transform: none; }
-  }
-  .hero-bottom {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-top: clamp(2rem, 6vw, 4rem);
-    animation: fade 1s ease 0.7s both;
-  }
-  @keyframes fade {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .intro {
-    margin: 0;
-    max-width: 30rem;
-    color: var(--color-text-secondary);
-    font-size: 1.05rem;
-    line-height: 1.6;
-  }
-
-  /* BUTTONS */
-  .cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.95rem 1.5rem;
-    border: 1px solid var(--color-border);
-    color: var(--color-text-primary);
-    text-decoration: none;
-    font-size: 0.74rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
-  }
-  .btn:hover {
-    border-color: var(--color-text-primary);
-  }
-  .btn.primary {
-    background: var(--color-text-primary);
-    color: var(--color-bg);
-    border-color: var(--color-text-primary);
-  }
-  .btn.primary:hover {
-    background: transparent;
-    color: var(--color-text-primary);
-  }
-  .arr {
-    display: inline-block;
-    transition: transform 0.25s ease;
-  }
-  .btn:hover .arr,
-  .text-link:hover span {
-    transform: translateX(5px);
-  }
-  .btn:focus-visible,
-  .text-link:focus-visible,
-  .disc-list a:focus-visible,
-  .reel-play:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 4px;
-  }
-
-  /* TICKER */
-  .ticker {
-    overflow: hidden;
-    border-block: 1px solid var(--color-border);
-    padding: 1.1rem 0;
-  }
-  .ticker-track {
-    display: flex;
-    width: max-content;
-    animation: scroll 45s linear infinite;
-  }
-  .ticker-group {
-    display: flex;
-  }
-  .ticker-group span {
-    white-space: nowrap;
-    font-size: 0.8rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-  }
-  .ticker-group span::after {
-    content: '✦';
-    margin: 0 2.5rem;
-    color: var(--color-accent);
-  }
-  @keyframes scroll {
-    to { transform: translateX(-50%); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .ticker-track { animation: none; }
-    .rec i { animation: none; }
-  }
-
-  /* SECTIONS */
-  .section {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: clamp(4rem, 9vw, 7rem) 1.5rem 0;
+    padding: 4rem 1.5rem 2rem;
   }
   .eyebrow {
-    margin: 0 0 0.75rem;
-    font-size: 0.72rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--color-text-secondary);
   }
-  .section h2 {
-    margin: 0 0 2rem;
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    line-height: 1.05;
+  h1 {
+    margin: 0 0 2.5rem;
+    font-size: clamp(3rem, 10vw, 7rem);
+    line-height: 0.95;
     font-weight: 800;
-    letter-spacing: -0.01em;
   }
-  .section-head {
+  .filters {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 1rem;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
   }
-  .text-link {
-    color: var(--color-text-primary);
-    text-decoration: none;
-    font-size: 0.74rem;
-    font-weight: 600;
+  .filters[hidden] {
+    display: none;
+  }
+  .filter {
+    background: none;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    padding: 0.6rem 1rem;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 0.3rem;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
   }
-  .text-link span {
-    display: inline-block;
-    transition: transform 0.25s ease;
+  .filter:hover {
+    color: var(--color-text-primary);
+    border-color: #4a4a4a;
+  }
+  .filter.active {
+    background: var(--color-text-primary);
+    color: var(--color-bg);
+    border-color: var(--color-text-primary);
+  }
+  .filter:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+  .sub .filter {
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.4rem 0.2rem;
+    margin-right: 0.8rem;
+  }
+  .sub .filter.active {
+    background: none;
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-accent);
   }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
+    margin-top: 2.5rem;
   }
-
-  /* REVEAL (only active when JavaScript is running) */
-  .reveal {
-    transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  :global(html.js) .reveal:not(.in) {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-
-  /* SHOWREEL */
-  .reel {
-    position: relative;
-    aspect-ratio: 16 / 9;
-    background: radial-gradient(ellipse at center, #1a1a1a 0%, #0d0d0d 70%);
-    border: 1px solid var(--color-border);
-    overflow: hidden;
-    display: grid;
-    place-items: center;
-  }
-  .reel img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
+  .item > :global(.card) {
     height: 100%;
-    object-fit: cover;
   }
-  .reel :global(video) {
-    width: 100%;
-    height: 100%;
-    background: #000;
-  }
-  .reel-label,
-  .reel-time {
-    position: absolute;
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+  .empty {
     color: var(--color-text-secondary);
-    z-index: 1;
-  }
-  .reel-label { top: 1rem; left: 1.2rem; }
-  .reel-time { bottom: 1rem; right: 1.2rem; font-variant-numeric: tabular-nums; }
-  .reel-play {
-    position: relative;
-    z-index: 1;
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    border: 1px solid var(--color-text-primary);
-    background: rgba(10, 10, 10, 0.5);
-    color: var(--color-text-primary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
-  }
-  .reel-play:hover {
-    transform: scale(1.08);
-    background: var(--color-text-primary);
-    color: var(--color-bg);
-  }
-  .reel-soon {
-    z-index: 1;
-    margin: 0;
-    font-size: 0.8rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
+    padding: 3rem 0;
   }
 
-  /* DISCIPLINES */
-  .disc-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--color-border);
-  }
-  .disc-list li {
-    border-bottom: 1px solid var(--color-border);
-  }
-  .disc-list a {
-    display: grid;
-    grid-template-columns: 3.5rem 1.2fr 1.6fr 2rem;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.6rem 0;
-    color: var(--color-text-primary);
-    text-decoration: none;
-    transition: padding-left 0.3s ease, color 0.3s ease;
-  }
-  .disc-list a:hover {
-    padding-left: 0.8rem;
-  }
-  .num {
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    font-variant-numeric: tabular-nums;
-  }
-  .name {
-    font-size: clamp(1.4rem, 3.2vw, 2.4rem);
-    font-weight: 800;
-    letter-spacing: -0.01em;
-  }
-  .blurb {
-    color: var(--color-text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.5;
-  }
-  .go {
-    justify-self: end;
-    transition: transform 0.3s ease;
-  }
-  .disc-list a:hover .go {
-    transform: translateX(6px);
-  }
-
-  /* ABOUT PREVIEW */
-  .about {
-    display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: clamp(2rem, 6vw, 5rem);
-    align-items: center;
-  }
-  .photo {
-    aspect-ratio: 4 / 5;
-    border: 1px solid var(--color-border);
-    background: linear-gradient(160deg, #161616, #0d0d0d);
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-  }
-  .photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .mono {
-    font-size: clamp(4rem, 12vw, 8rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    color: #2a2a2a;
-  }
-  .about-text p:not(.eyebrow) {
-    margin: 0 0 2rem;
-    max-width: 34rem;
-    color: var(--color-text-secondary);
-    font-size: 1.05rem;
-    line-height: 1.7;
-  }
-
-  /* CONTACT CTA */
-  .cta-block {
-    text-align: center;
-    padding-bottom: 2rem;
-  }
-  .cta-block h2 {
-    max-width: 18ch;
-    margin: 0 auto 2.5rem;
-    font-size: clamp(2.4rem, 7vw, 5.5rem);
-  }
-  .cta-block h2 em {
-    font-size: 1.08em;
-  }
-  .cta-block .cta {
-    justify-content: center;
-  }
-
-  /* RESPONSIVE */
-  @media (max-width: 860px) {
-    .about {
-      grid-template-columns: 1fr;
+  @media (max-width: 600px) {
+    .filters {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
     }
-    .photo {
-      max-width: 22rem;
-    }
-    .disc-list a {
-      grid-template-columns: 2.5rem 1fr 1.5rem;
-      row-gap: 0.4rem;
-    }
-    .blurb {
-      grid-column: 2 / 3;
-      grid-row: 2;
-    }
-  }
-  @media (max-width: 560px) {
-    .cta .btn {
-      flex: 1 1 100%;
-      justify-content: center;
-    }
-    .hero-top {
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-    .reel-play {
-      width: 68px;
-      height: 68px;
+    .filter {
+      white-space: nowrap;
     }
   }
 </style>
